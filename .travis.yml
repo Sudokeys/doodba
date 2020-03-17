@@ -63,6 +63,6 @@ deploy:
   provider: script
   script: ./hooks/push
   on:
-    branch: master
+    branch: sudokeys
     condition:
       - $TRAVIS_BUILD_STAGE_NAME = Test

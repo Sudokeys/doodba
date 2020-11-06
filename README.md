@@ -1,11 +1,10 @@
 # [Doodba](https://hub.docker.com/r/tecnativa/doodba)
 
+![ci](https://github.com/Tecnativa/doodba/workflows/ci/badge.svg)
 [![](https://images.microbadger.com/badges/version/tecnativa/doodba:latest.svg)](https://microbadger.com/images/tecnativa/doodba:latest "Get your own version badge on microbadger.com")
 [![](https://images.microbadger.com/badges/image/tecnativa/doodba:latest.svg)](https://microbadger.com/images/tecnativa/doodba:latest "Get your own image badge on microbadger.com")
 [![](https://images.microbadger.com/badges/commit/tecnativa/doodba:latest.svg)](https://microbadger.com/images/tecnativa/doodba:latest "Get your own commit badge on microbadger.com")
 [![](https://images.microbadger.com/badges/license/tecnativa/doodba.svg)](https://microbadger.com/images/tecnativa/doodba "Get your own license badge on microbadger.com")
-
-[![](https://api.travis-ci.org/Tecnativa/doodba.svg)](https://travis-ci.org/Tecnativa/doodba)
 
 **Doodba** stands for **Do**cker **Od**oo **Ba**se, and it is a highly opinionated image
 ready to put [Odoo](https://www.odoo.com) inside it, but **without Odoo**.
@@ -61,7 +60,8 @@ You can start working with this straight away with our [template][].
   - [`log`](#log)
   - [`pot`](#pot)
   - [`psql`](#psql)
-  - [`ptvsd`](#ptvsd)
+  - [`inotify`](#inotify)
+  - [`debugpy`](#debugpy)
   - [`pudb`](#pudb)
   - [`git-aggregator`](#git-aggregator)
   - [`autoaggregate`](#autoaggregate)
@@ -394,8 +394,8 @@ server-tools:
 # Custom repositories
 ENV:
   DEFAULT_REPO_PATTERN: https://github.com/Tecnativa/{}.git
-  ODOO_VERSION: 13.0-new-feature
-some-repo: # Cloned from https://github.com/Tecnativa/some-repo.git branch 13.0-new-feature
+  ODOO_VERSION: 14.0-new-feature
+some-repo: # Cloned from https://github.com/Tecnativa/some-repo.git branch 14.0-new-feature
   - some_custom_module
 ```
 
@@ -505,7 +505,19 @@ just need to execute:
 
 The same is true for any other [Postgres client applications][].
 
-### [`ptvsd`](https://github.com/DonJayamanne/pythonVSCode)
+### [`inotify`](https://github.com/dsoprea/PyInotify)
+
+Enables hot code reloading when odoo is started with `--dev` and passed `reload` or
+`all` as an argument.
+
+[copier template](https://github.com/Tecnativa/doodba-copier-template) enables this by
+default in the development environment.
+
+Doodba supports this feature under versions 11.0 and later. Check
+[CLI docs](https://www.odoo.com/documentation/13.0/reference/cmdline.html#developer-features)
+for details.
+
+### [`debugpy`](https://github.com/microsoft/vscode-python)
 
 [VSCode][] debugger. If you use this editor with its python module, you will find it
 useful.
@@ -513,19 +525,22 @@ useful.
 To debug at a certain point of the code, add this Python code somewhere:
 
 ```python
-import ptvsd
-ptvsd.enable_attach("doodba-rocks", address=("0.0.0.0", 6899))
-print("ptvsd waiting...")
-ptvsd.wait_for_attach()
+import debugpy
+debugpy.listen(6899)
+print("Waiting for debugger attach")
+debugpy.wait_for_client()
+debugpy.breakpoint()
+print('break on this line')
 ```
 
-To start Odoo within a ptvsd environment, which will obey the breakpoints established in
-your IDE (but will work slowly), just add `-e PTVSD_ENABLE=1` to your odoo container.
+To start Odoo within a debugpy environment, which will obey the breakpoints established
+in your IDE (but will work slowly), just add `-e DEBUGPY_ENABLE=1` to your odoo
+container.
 
-If you use the official [template][], you can boot it in ptvsd mode with:
+If you use the official [template][], you can boot it in debugpy mode with:
 
 ```bash
-export DOODBA_PTVSD_ENABLE=1
+export DOODBA_DEBUGPY_ENABLE=1
 docker-compose -f devel.yaml up -d
 ```
 

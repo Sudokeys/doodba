@@ -22,6 +22,8 @@ ENV DB_FILTER=.* \
     PIP_NO_CACHE_DIR=0 \
     PTVSD_ARGS="--host 0.0.0.0 --port 6899 --wait --multiprocess" \
     PTVSD_ENABLE=0 \
+    DEBUGPY_ARGS="--listen 0.0.0.0:6899 --wait-for-client" \
+    DEBUGPY_ENABLE=0 \
     PUDB_RDB_HOST=0.0.0.0 \
     PUDB_RDB_PORT=6899 \
     PYTHONOPTIMIZE=1 \
@@ -44,7 +46,7 @@ RUN sed -Ei 's@(^deb http://deb.debian.org/debian jessie-updates main$)@#\1@' /e
         libfreetype6 liblcms2-2 libopenjpeg5 libtiff5 tk tcl libpq5 \
         libldap-2.4-2 libsasl2-2 libx11-6 libxext6 libxrender1 \
         locales-all zlibc \
-        bzip2 ca-certificates curl gettext-base git nano \
+        bzip2 ca-certificates curl gettext git nano \
         openssh-client telnet xz-utils \
     && curl https://bootstrap.pypa.io/get-pip.py | python /dev/stdin \
     && curl -sL https://deb.nodesource.com/setup_6.x | bash - \
@@ -75,7 +77,8 @@ RUN ln -s /usr/bin/nodejs /usr/local/bin/node \
     && rm -Rf ~/.npm /tmp/*
 
 # Special case to get bootstrap-sass, required by Odoo for Sass assets
-RUN gem install --no-rdoc --no-ri --no-update-sources bootstrap-sass --version '<3.4' \
+RUN gem install --no-rdoc --no-ri --no-update-sources autoprefixer-rails --version '<9.8.6' \
+    && gem install --no-rdoc --no-ri --no-update-sources bootstrap-sass --version '<3.4' \
     && rm -Rf ~/.gem /var/lib/gems/*/cache/
 
 # Other facilities
@@ -85,6 +88,7 @@ RUN pip install \
         git-aggregator \
         plumbum \
         ptvsd \
+        debugpy \
         pudb \
         virtualenv \
         wdb \

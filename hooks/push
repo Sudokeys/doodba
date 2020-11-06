@@ -3,7 +3,9 @@
 from plumbum import FG, local
 from plumbum.cmd import docker  # noqa pylint: disable=import-error
 
+REGISTRY = local.env["REGISTRY_HOST"]
 REPO = local.env["DOCKER_REPO"]
+REPO_SUFFIX = local.env.get("DOCKER_REPO_SUFFIX", "")
 VERSION = local.env["DOCKER_TAG"]
 
 # Log all locally available images; will help to pin images
@@ -13,13 +15,21 @@ docker["image", "ls", "--digests", REPO] & FG
 docker(
     "login",
     "--username",
-    local.env["DOCKER_HUB_USERNAME"],
+    local.env["REGISTRY_USERNAME"],
     "--password",
-    local.env["DOCKER_HUB_TOKEN"],
+    local.env["REGISTRY_PASSWORD"],
+    REGISTRY,
 )
 
 # Push built images
 for suffix in ("", "-onbuild"):
-    docker["image", "push", "%s:%s%s" % (REPO, VERSION, suffix)] & FG
+    # Prefix images with registry
+    local_tag = f"{REPO}:{VERSION}{suffix}"
+    public_tag = f"{REGISTRY}/{REPO}{REPO_SUFFIX}:{VERSION}{suffix}"
+    docker["image", "tag", local_tag, public_tag] & FG
+    # Push to registry
+    docker["image", "push", public_tag] & FG
     if VERSION == local.env.get("LATEST_RELEASE"):
-        docker["image", "push", "%s:latest%s" % (REPO, suffix)] & FG
+        public_latest_tag = f"{REGISTRY}/{REPO}{REPO_SUFFIX}:latest{suffix}"
+        docker["image", "tag", local_tag, public_latest_tag] & FG
+        docker["image", "push", public_latest_tag] & FG

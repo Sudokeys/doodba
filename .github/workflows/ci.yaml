@@ -4,7 +4,7 @@ on:
   pull_request:
   push:
     branches:
-      - master
+      - sudokeys
   schedule:
     # See https://crontab.guru/weekly
     - cron: 0 0 * * 0
@@ -49,10 +49,10 @@ jobs:
           - odoo_version: "7.0"
             pg_version: "9.6"
     env:
-      # Indicates what's the equivalent to tecnativa/doodba:latest image
+      # Indicates what's the equivalent to sudokeys/doodba:latest image
       LATEST_RELEASE: "14.0"
       # Variables found by default in Docker Hub builder
-      DOCKER_REPO: tecnativa/doodba
+      DOCKER_REPO: sudokeys/doodba
       DOCKER_TAG: ${{ matrix.odoo_version }}
       GIT_SHA1: ${{ github.sha }}
       # Other variables to configure tests and execution environment
@@ -69,14 +69,16 @@ jobs:
       - run: python -m unittest -v tests
       # Push
       - name: push to docker hub
-        if: github.repository == 'Tecnativa/doodba' && github.ref == 'refs/heads/master'
+        if:
+          github.repository == 'sudokeys/doodba' && github.ref == 'refs/heads/sudokeys'
         env:
           REGISTRY_HOST: docker.io
-          REGISTRY_PASSWORD: ${{ secrets.dockerhub_password }}
-          REGISTRY_USERNAME: ${{ secrets.dockerhub_username }}
+          REGISTRY_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
+          REGISTRY_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
         run: ./hooks/push
       - name: push to github registry
-        if: github.repository == 'Tecnativa/doodba' && github.ref == 'refs/heads/master'
+        if:
+          github.repository == 'sudokeys/doodba' && github.ref == 'refs/heads/sudokeys'
         env:
           DOCKER_REPO_SUFFIX: /doodba
           REGISTRY_HOST: docker.pkg.github.com

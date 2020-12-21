@@ -62,26 +62,28 @@ jobs:
       # Prepare
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v1
-      - run: pip install -r requirements-ci.txt
+      # Install dev and test dependencies
+      - run: pip install poetry
+      - name: Patch $PATH
+        run: echo "$HOME/.local/bin" >> $GITHUB_PATH
+      - run: poetry install
       # Build images
-      - run: ./hooks/build
+      - run: poetry run ./hooks/build
       # Test
-      - run: python -m unittest -v tests
+      - run: poetry run python -m unittest -v tests
       # Push
       - name: push to docker hub
         if:
           github.repository == 'sudokeys/doodba' && github.ref == 'refs/heads/sudokeys'
         env:
           REGISTRY_HOST: docker.io
-          REGISTRY_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
-          REGISTRY_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
-        run: ./hooks/push
-      - name: push to github registry
-        if:
-          github.repository == 'sudokeys/doodba' && github.ref == 'refs/heads/sudokeys'
+          REGISTRY_PASSWORD: ${{ secrets.DOCKERHUB_TOKEN }}
+          REGISTRY_USERNAME: ${{ secrets.DOCKERHUB_LOGIN }}
+        run: poetry run ./hooks/push
+      - name: push to github container registry
+        if: github.repository == 'sudokeys/doodba' && github.ref == 'refs/heads/master'
         env:
-          DOCKER_REPO_SUFFIX: /doodba
-          REGISTRY_HOST: docker.pkg.github.com
-          REGISTRY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
-          REGISTRY_USERNAME: ${{ github.actor }}
-        run: ./hooks/push
+          REGISTRY_HOST: ghcr.io
+          REGISTRY_PASSWORD: ${{ secrets.BOT_TOKEN }}
+          REGISTRY_USERNAME: ${{ secrets.BOT_LOGIN }}
+        run: poetry run ./hooks/push
